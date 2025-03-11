@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego Educativo - Diabetes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-pink-200 flex items-center justify-center min-h-screen">
+    <div id="gameContainer" class="bg-white p-10 rounded-2xl shadow-2xl w-96 text-center">
+        <div id="startScreen">
+            <div class="text-6xl">😊</div>
+            <h1 class="font-bold text-lg mt-4">¡Hola soy DIBI y tengo Diabetes! ¿Puedes ayudarme?</h1>
+            <p class="mt-2">Contesta a estas preguntas y aprendamos juntos</p>
+            <input id="playerName" type="text" placeholder="Tu nombre" class="mt-4 p-2 border rounded w-full">
+            <button onclick="startGame()" class="mt-4 p-2 bg-blue-400 text-white rounded-full w-full hover:bg-yellow-400">Comenzar</button>
+        </div>
+
+        <div id="questionScreen" class="hidden">
+            <div id="emoji" class="text-6xl">🙂</div>
+            <h2 id="question" class="mt-4 font-bold text-lg"></h2>
+            <div id="answers" class="mt-4"></div>
+            <p class="mt-4">Puntuación: <span id="score">100</span></p>
+        </div>
+
+        <div id="endScreen" class="hidden">
+            <div class="text-6xl">🎉</div>
+            <h2 class="font-bold text-lg mt-4">¡Gracias por jugar!</h2>
+            <button onclick="restartGame()" class="mt-4 p-2 bg-blue-400 text-white rounded-full w-full hover:bg-yellow-400">Volver a jugar</button>
+            <button onclick="location.reload()" class="mt-2 p-2 bg-blue-400 text-white rounded-full w-full hover:bg-yellow-400">Volver al inicio</button>
+        </div>
+    </div>
+
+    <div class="absolute top-4 right-4 bg-white p-4 rounded-2xl shadow-2xl">
+        <h2 class="font-bold">Ranking</h2>
+        <ul id="ranking"></ul>
+    </div>
+
+    <script>
+        let questions = [
+            { question: "¿Qué debo hacer cuando tengo mucha sed?", answers: ["Tomar agua", "Comer dulces", "No hacer nada"], correct: 0 },
+            { question: "¿Cómo controlo mi azúcar en sangre?", answers: ["Con magia", "Con insulina y comida saludable", "Solo con dulces"], correct: 1 },
+            { question: "¿Qué alimentos son buenos para mí?", answers: ["Verduras y proteínas", "Solo caramelos", "Solo refrescos"], correct: 0 }
+        ];
+        let currentQuestion = 0;
+        let score = 100;
+        let playerName = "";
+
+        function startGame() {
+            playerName = document.getElementById("playerName").value;
+            if (playerName === "") return alert("Por favor, ingresa tu nombre");
+            document.getElementById("startScreen").classList.add("hidden");
+            document.getElementById("questionScreen").classList.remove("hidden");
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            if (currentQuestion >= questions.length) return endGame();
+            let q = questions[currentQuestion];
+            document.getElementById("question").innerText = q.question;
+            let answersDiv = document.getElementById("answers");
+            answersDiv.innerHTML = "";
+            q.answers.forEach((ans, i) => {
+                let btn = document.createElement("button");
+                btn.innerText = ans;
+                btn.className = "p-2 bg-blue-400 text-white rounded-full w-full hover:bg-green-500 mt-2";
+                btn.onclick = () => checkAnswer(i);
+                answersDiv.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selected) {
+            if (selected === questions[currentQuestion].correct) {
+                score += 10;
+            } else {
+                score -= 10;
+            }
+            updateEmoji();
+            document.getElementById("score").innerText = score;
+            currentQuestion++;
+            setTimeout(loadQuestion, 500);
+        }
+
+        function updateEmoji() {
+            let emoji = "😢";
+            if (score >= 120) emoji = "🤩";
+            else if (score >= 80) emoji = "🙂";
+            document.getElementById("emoji").innerText = emoji;
+        }
+
+        function endGame() {
+            document.getElementById("questionScreen").classList.add("hidden");
+            document.getElementById("endScreen").classList.remove("hidden");
+            saveScore();
+            loadRanking();
+        }
+
+        function saveScore() {
+            let scores = JSON.parse(localStorage.getItem("scores")) || [];
+            scores.unshift({ name: playerName, score });
+            scores = scores.slice(0, 10);
+            localStorage.setItem("scores", JSON.stringify(scores));
+        }
+
+        function loadRanking() {
+            let scores = JSON.parse(localStorage.getItem("scores")) || [];
+            let ranking = document.getElementById("ranking");
+            ranking.innerHTML = scores.map(s => `<li>${s.name}: ${s.score}</li>`).join(" ");
+        }
+
+        function restartGame() {
+            currentQuestion = 0;
+            score = 100;
+            document.getElementById("endScreen").classList.add("hidden");
+            document.getElementById("questionScreen").classList.remove("hidden");
+            loadQuestion();
+        }
+
+        loadRanking();
+    </script>
+</body>
+</html>
